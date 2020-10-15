@@ -4,7 +4,13 @@ let camera, scene, renderer;
 
 let geometry, material, mesh;
 
-let table, s1, s2, s3, s4, s5, s6;
+let table;
+
+let sticks = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
+
+let selectedStick = null;
+
+let rotate = 0;
 
 function createBox(l, h, w) {
     'use strict';
@@ -20,11 +26,24 @@ function createCylinder(l) {
     'use strict'
 
 	geometry = new THREE.CylinderGeometry(1, 3, l, 64);
-    material = new THREE.MeshBasicMaterial({color: 0xffff00, wireframe: true});
+    material = new THREE.MeshBasicMaterial({color: 0x948160, wireframe: true});
     mesh = new THREE.Mesh(geometry, material);	
 	mesh.position.set(0, 0, 0);
 	return mesh;
 }
+
+function selectStick(stick) {
+	for(let i = 0; i <= 5; i++) {
+		if (i == stick) {
+			sticks[i].children[0].material.color.setHex(0x00ff00);
+			selectedStick = sticks[i];
+		}
+		else {
+			sticks[i].children[0].material.color.setHex(0x948160);
+		}
+	}
+}
+
 
 function createTable(l, h ,w) {
     'use strict';
@@ -64,41 +83,48 @@ function createTable(l, h ,w) {
 
     scene.add(table);
 
-    //add sticks to the table
+	//add sticks to the table
 
-    s1 = new THREE.Object3D();
-    let s = createCylinder(w);
-
-    s1.add(s)
-
-    s2 = new THREE.Object3D();
-    s = createCylinder(w);
-    s2.add(s)
-
-    s3 = new THREE.Object3D();
-    s = createCylinder(w);
-    s3.add(s)
-
-    s4 = new THREE.Object3D();
-    s = createCylinder(w);
-    s4.add(s)
-
-    s5 = new THREE.Object3D();
-    s = createCylinder(w);
-    s5.add(s)
-
-    s6 = new THREE.Object3D();
-    s = createCylinder(w);
-    s6.add(s)
-
+	let s1 = sticks[0];
+	let s2 = sticks[1];
+	let s3 = sticks[2];
+	let s4 = sticks[3];
+	let s5 = sticks[4];
+	let s6 = sticks[5];
+	
+	s1.add(createCylinder(w));
+	s2.add(createCylinder(w));
+	s3.add(createCylinder(w));
+	s4.add(createCylinder(w));
+	s5.add(createCylinder(w));
+	s6.add(createCylinder(w));
+	
     scene.add(s1);
-    scene.add(s2);
+	scene.add(s2);
     scene.add(s3);
     scene.add(s4);
     scene.add(s5);
     scene.add(s6);
-}
 
+
+	let pivot = new THREE.Group();
+	s3.position.set(l/4, 0, w/2);
+	s3.rotateX(-Math.PI / 2);
+
+
+	s2.position.set(-l/4, 0, w/2);
+	s2.rotateX(-Math.PI / 2);
+
+	s5.position.set(l/4, 0, -w/2);
+	s5.rotateX(Math.PI / 2);
+	s6.position.set(-l/4, 0, -w/2);
+	s6.rotateX(Math.PI / 2);
+
+	s4.position.set(l/2 + w/2, 0, 0);
+	s4.rotateZ(Math.PI / 2);
+	s1.position.set(-l/2 - w/2, 0, 0);
+	s1.rotateZ(-Math.PI / 2);
+}
 
 function createScene() {
     'use strict';
@@ -114,9 +140,9 @@ function createScene() {
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.x = 200;
-    camera.position.y = 200;
-    camera.position.z = 200;
+    camera.position.x = 250;
+    camera.position.y = 250;
+    camera.position.z = 250;
     camera.lookAt(scene.position);
 }
 
@@ -129,15 +155,49 @@ function onResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
     }
+}
 
+function onKeyUp(e) {
+	'use strict'
+
+	switch(e.keyCode) {
+		case 37:
+		case 39:
+			rotate = 0
+			break;
+	}
 }
 
 function onKeyDown(e) {
     'use strict';
 
     switch (e.keyCode) {
-    case 69:  //E
-    case 101: //e
+	case 37:	// <-
+		rotate = -1;
+		break;
+	case 39: 	// ->
+		rotate = 1;
+		break;
+	case 52:	// 1
+		selectStick(0);
+		break;
+	case 53:	// 2
+		selectStick(1);
+		break
+	case 54:	// 3
+		selectStick(2);
+		break;
+	case 55:	// 4
+		selectStick(3);
+		break
+	case 56:	// 5
+		selectStick(4);
+		break;
+	case 57:	// 6
+		selectStick(5);
+		break
+    case 69:  	//E
+    case 101: 	//e
         scene.traverse(function (node) {
             if (node instanceof THREE.AxisHelper) {
                 node.visible = !node.visible;
@@ -165,12 +225,16 @@ function init() {
 
     render();
 
+	window.addEventListener("keyUp", onKeyUp);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 }
 
 function animate() {
-    'use strict';
+	'use strict';
+	
+	if(rotate == -1 && selectedStick) {
+	}
 
     render();
 
