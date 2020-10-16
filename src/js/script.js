@@ -26,8 +26,9 @@ function createCylinder(l) {
     'use strict'
 
 	geometry = new THREE.CylinderGeometry(1, 3, l, 64);
-    material = new THREE.MeshBasicMaterial({color: 0x948160, wireframe: true});
-    mesh = new THREE.Mesh(geometry, material);	
+	geometry.translate(0, -l/2, 0);
+    	material = new THREE.MeshBasicMaterial({color: 0x948160, wireframe: true});
+    	mesh = new THREE.Mesh(geometry, material);	
 	mesh.position.set(0, 0, 0);
 	return mesh;
 }
@@ -106,23 +107,24 @@ function createTable(l, h ,w) {
     scene.add(s5);
     scene.add(s6);
 
-
-	let pivot = new THREE.Group();
-	s3.position.set(l/4, 0, w/2);
+	s3.position.set(l/4, 0, w/2 );
 	s3.rotateX(-Math.PI / 2);
+	s3.rotateZ(Math.PI / 4);
 
 
 	s2.position.set(-l/4, 0, w/2);
 	s2.rotateX(-Math.PI / 2);
 
-	s5.position.set(l/4, 0, -w/2);
+	s5.position.set(l/4, 0, -w/2 );
 	s5.rotateX(Math.PI / 2);
+
 	s6.position.set(-l/4, 0, -w/2);
 	s6.rotateX(Math.PI / 2);
 
-	s4.position.set(l/2 + w/2, 0, 0);
+	s4.position.set(l/2 , 0, 0);
 	s4.rotateZ(Math.PI / 2);
-	s1.position.set(-l/2 - w/2, 0, 0);
+
+	s1.position.set(-l/2 , 0, 0);
 	s1.rotateZ(-Math.PI / 2);
 }
 
