@@ -8,9 +8,15 @@ let table;
 
 let sticks = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
 
-let selectedStick = null;
+let balls = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
 
-let rotate = 0;
+let selectedStick = null, selectedBall = null;
+
+let rotate = [0, 0];
+
+let clock = new THREE.Clock();
+
+let shot = 0;
 
 function createBox(l, h, w) {
     'use strict';
@@ -23,13 +29,23 @@ function createBox(l, h, w) {
 }
 
 function createCylinder(l) {
-    'use strict'
+    'use strict';
 
 	geometry = new THREE.CylinderGeometry(1, 3, l, 64);
-	geometry.translate(0, -l/2, 0);
-    	material = new THREE.MeshBasicMaterial({color: 0x948160, wireframe: true});
-    	mesh = new THREE.Mesh(geometry, material);	
-	mesh.position.set(0, 0, 0);
+	geometry.translate(0, -l/2 - l/10, 0);
+    material = new THREE.MeshBasicMaterial({color: 0x948160, wireframe: true});
+    mesh = new THREE.Mesh(geometry, material);	
+    mesh.position.set(0, 0, 0);
+	return mesh;
+}
+
+function createBall(r) {
+    'use strict';
+
+    geometry = new THREE.SphereGeometry(r, 32, 32);
+    material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true});
+    mesh = new THREE.Mesh(geometry, material);	
+    mesh.position.set(0, 0, 0);
 	return mesh;
 }
 
@@ -37,7 +53,8 @@ function selectStick(stick) {
 	for(let i = 0; i <= 5; i++) {
 		if (i == stick) {
 			sticks[i].children[0].material.color.setHex(0x00ff00);
-			selectedStick = sticks[i];
+            selectedStick = sticks[i];
+            selectedBall = balls[i];
 		}
 		else {
 			sticks[i].children[0].material.color.setHex(0x948160);
@@ -50,8 +67,8 @@ function createTable(l, h ,w) {
     'use strict';
 
     table = new THREE.Object3D();
-    let leg_size = 40;
-    let wall_width = 6;
+    const leg_size = 40;
+    const wall_width = h;
 
     let table_top = createBox(l, h, w);
     let leg1 = createBox(l/leg_size, l/4, l/leg_size);
@@ -86,12 +103,16 @@ function createTable(l, h ,w) {
 
 	//add sticks to the table
 
-	let s1 = sticks[0];
+    let s1 = sticks[0];
 	let s2 = sticks[1];
 	let s3 = sticks[2];
 	let s4 = sticks[3];
 	let s5 = sticks[4];
-	let s6 = sticks[5];
+    let s6 = sticks[5];
+    
+    for(let i = 0; i < 6; i++) {
+        sticks[i].userData = {rotation: 0};
+    }
 	
 	s1.add(createCylinder(w));
 	s2.add(createCylinder(w));
@@ -107,25 +128,74 @@ function createTable(l, h ,w) {
     scene.add(s5);
     scene.add(s6);
 
-	s3.position.set(l/4, 0, w/2 );
+    const adjustment = h * 2 + 2;
+
+	s3.position.set(l/4, 0, w/2 - adjustment);
 	s3.rotateX(-Math.PI / 2);
-	s3.rotateZ(Math.PI / 4);
 
-
-	s2.position.set(-l/4, 0, w/2);
+	s2.position.set(-l/4, 0, w/2 - adjustment);
 	s2.rotateX(-Math.PI / 2);
 
-	s5.position.set(l/4, 0, -w/2 );
+	s5.position.set(l/4, 0, -w/2 + adjustment);
 	s5.rotateX(Math.PI / 2);
 
-	s6.position.set(-l/4, 0, -w/2);
+	s6.position.set(-l/4, 0, -w/2 + adjustment);
 	s6.rotateX(Math.PI / 2);
 
-	s4.position.set(l/2 , 0, 0);
-	s4.rotateZ(Math.PI / 2);
+	s4.position.set(l/2 - adjustment, 0, 0);
+	s4.rotateX(Math.PI / 2);
+    s4.rotateZ(Math.PI / 2);
 
-	s1.position.set(-l/2 , 0, 0);
-	s1.rotateZ(-Math.PI / 2);
+	s1.position.set(-l/2 + adjustment , 0, 0);
+    s1.rotateX(-Math.PI / 2);
+    s1.rotateZ(-Math.PI / 2);
+
+    // add balls
+
+    let b1 = balls[0];
+	let b2 = balls[1];
+	let b3 = balls[2];
+	let b4 = balls[3];
+	let b5 = balls[4];
+    let b6 = balls[5];
+
+    for(let i = 0; i < 6; i++) {
+        balls[i].userData.velocity = new THREE.Vector3(0,0,0);
+    }
+
+    const ballRadius = w/30;
+
+    b1.add(createBall(ballRadius));
+	b2.add(createBall(ballRadius));
+	b3.add(createBall(ballRadius));
+	b4.add(createBall(ballRadius));
+	b5.add(createBall(ballRadius));
+    b6.add(createBall(ballRadius));
+    
+    scene.add(b1);
+	scene.add(b2);
+    scene.add(b3);
+    scene.add(b4);
+    scene.add(b5);
+    scene.add(b6);
+
+    b3.position.set(l/4, ballRadius, w/2 - adjustment);
+	b3.rotateY(Math.PI / 2);
+
+	b2.position.set(-l/4, ballRadius, w/2 - adjustment);
+	b2.rotateY(Math.PI / 2);
+
+	b5.position.set(l/4, ballRadius, -w/2 + adjustment);
+	b5.rotateY(-Math.PI / 2);
+
+	b6.position.set(-l/4, ballRadius, -w/2 + adjustment);
+	b6.rotateY(-Math.PI / 2);
+
+	b4.position.set(l/2 - adjustment, ballRadius, 0);
+    b4.rotateY(Math.PI);
+
+	b1.position.set(-l/2 + adjustment, ballRadius, 0);
+
 }
 
 function createScene() {
@@ -142,9 +212,9 @@ function createScene() {
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.x = 250;
+    //camera.position.x = 250;
     camera.position.y = 250;
-    camera.position.z = 250;
+    //camera.position.z = 250;
     camera.lookAt(scene.position);
 }
 
@@ -160,13 +230,18 @@ function onResize() {
 }
 
 function onKeyUp(e) {
-	'use strict'
+	'use strict';
 
 	switch(e.keyCode) {
-		case 37:
-		case 39:
-			rotate = 0
-			break;
+    case 32:	// Space
+		shot = 0;
+		break;
+    case 37:
+        rotate[0] = 0;
+        break;
+    case 39:
+        rotate[1] = 0;
+        break;
 	}
 }
 
@@ -174,11 +249,14 @@ function onKeyDown(e) {
     'use strict';
 
     switch (e.keyCode) {
+    case 32:	// Space
+		shot = 1;
+		break;
 	case 37:	// <-
-		rotate = -1;
+		rotate[0] = 1;
 		break;
 	case 39: 	// ->
-		rotate = 1;
+		rotate[1] = 1;
 		break;
 	case 52:	// 1
 		selectStick(0);
@@ -227,16 +305,58 @@ function init() {
 
     render();
 
-	window.addEventListener("keyUp", onKeyUp);
+	window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 }
 
 function animate() {
 	'use strict';
-	
-	if(rotate == -1 && selectedStick) {
-	}
+    let rotationSpeed = Math.PI / 6;
+	let delta = 0;
+
+	delta = clock.getDelta();
+    
+	if(rotate != 0 && selectedStick && selectedStick.userData.rotation < Math.PI /3) {
+        selectedStick.rotateZ(rotationSpeed * delta * rotate[1]);
+        selectedStick.userData.rotation += rotationSpeed * delta * rotate[1];
+    }
+    if(rotate != 0 && selectedStick && selectedStick.userData.rotation > -Math.PI /3) {
+        selectedStick.rotateZ(rotationSpeed * delta * -rotate[0]);
+        selectedStick.userData.rotation -= rotationSpeed * delta * rotate[0];
+    }
+
+    for(let i = 0; i < 6; i++) {
+        balls[i].translateX(balls[i].userData.velocity.x * delta);
+        balls[i].translateY(balls[i].userData.velocity.y * delta);
+        balls[i].translateZ(balls[i].userData.velocity.z * delta);
+
+        if(balls[i].userData.velocity.x < 0) {
+            balls[i].userData.velocity.x += 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
+        } else {
+            balls[i].userData.velocity.x -= 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
+        }
+        if(balls[i].userData.velocity.z < 0) {
+            balls[i].userData.velocity.z += 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
+        } else {
+            balls[i].userData.velocity.z -= 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
+        }
+
+        if(Math.abs(balls[i].userData.velocity.x) < 5) {
+            balls[i].userData.velocity.x = 0;
+        }
+        if(Math.abs(balls[i].userData.velocity.z) < 5) {
+            balls[i].userData.velocity.z = 0;
+        }
+    }
+
+    if(shot && selectedStick) {
+        shot = 0;
+        let angle = selectedStick.userData.rotation
+        selectedBall.userData.velocity.x = 100 * Math.cos(angle);
+        selectedBall.userData.velocity.z = -100 * Math.sin(angle);
+        console.log(angle);
+    }
 
     render();
 
