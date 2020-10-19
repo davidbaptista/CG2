@@ -18,6 +18,7 @@ let clock = new THREE.Clock();
 
 let shot = 0;
 
+
 function createBox(l, h, w) {
     'use strict';
 
@@ -160,7 +161,8 @@ function createTable(l, h ,w) {
     let b6 = balls[5];
 
     for(let i = 0; i < 6; i++) {
-        balls[i].userData.velocity = new THREE.Vector3(0,0,0);
+		balls[i].userData.velocity = new THREE.Vector3(0,0,0);
+		balls[i].userData.orientation = i <= 2 ? -1 : 1;
     }
 
     const ballRadius = w/30;
@@ -177,25 +179,25 @@ function createTable(l, h ,w) {
     scene.add(b3);
     scene.add(b4);
     scene.add(b5);
-    scene.add(b6);
+	scene.add(b6);
+	
 
-    b3.position.set(l/4, ballRadius, w/2 - adjustment);
-	b3.rotateY(Math.PI / 2);
+	b3.position.set(l/4, ballRadius, w/2 - adjustment);
+	b3.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 
 	b2.position.set(-l/4, ballRadius, w/2 - adjustment);
-	b2.rotateY(Math.PI / 2);
+	b2.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 
 	b5.position.set(l/4, ballRadius, -w/2 + adjustment);
-	b5.rotateY(-Math.PI / 2);
+	b5.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
 
 	b6.position.set(-l/4, ballRadius, -w/2 + adjustment);
-	b6.rotateY(-Math.PI / 2);
+	b6.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
 
 	b4.position.set(l/2 - adjustment, ballRadius, 0);
-    b4.rotateY(Math.PI);
+	b4.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI);
 
 	b1.position.set(-l/2 + adjustment, ballRadius, 0);
-
 }
 
 function createScene() {
@@ -333,15 +335,19 @@ function animate() {
 
         if(balls[i].userData.velocity.x < 0) {
             balls[i].userData.velocity.x += 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
-        } else {
+		} 
+		else {
             balls[i].userData.velocity.x -= 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
-        }
+		}
+		
         if(balls[i].userData.velocity.z < 0) {
             balls[i].userData.velocity.z += 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
-        } else {
+		} 
+		else {
             balls[i].userData.velocity.z -= 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
         }
 
+		// if ball moves too slowly, stop it
         if(Math.abs(balls[i].userData.velocity.x) < 5) {
             balls[i].userData.velocity.x = 0;
         }
@@ -354,7 +360,7 @@ function animate() {
         shot = 0;
         let angle = selectedStick.userData.rotation
         selectedBall.userData.velocity.x = 100 * Math.cos(angle);
-        selectedBall.userData.velocity.z = -100 * Math.sin(angle);
+        selectedBall.userData.velocity.z = 100 * Math.sin(angle * selectedBall.userData.orientation);
         console.log(angle);
     }
 
