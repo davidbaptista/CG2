@@ -8,7 +8,9 @@ let table;
 
 let sticks = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
 
-let balls = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
+let whiteBalls = [new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D(), new THREE.Object3D()];
+
+let balls = [];
 
 let selectedStick = null, selectedBall = null;
 
@@ -17,6 +19,9 @@ let rotate = [0, 0];
 let clock = new THREE.Clock();
 
 let shot = 0;
+
+let possibleColours = ["0xffff00", "0xff00ff", "0x00ffff", "0x0000ff", "0xff0000", "0x00ff00"];
+
 
 
 function createBox(l, h, w) {
@@ -49,13 +54,12 @@ function createBall(r) {
     mesh.position.set(0, 0, 0);
 	return mesh;
 }
-
 function selectStick(stick) {
 	for(let i = 0; i <= 5; i++) {
 		if (i == stick) {
 			sticks[i].children[0].material.color.setHex(0x00ff00);
             selectedStick = sticks[i];
-            selectedBall = balls[i];
+            selectedBall = whiteBalls[i];
 		}
 		else {
 			sticks[i].children[0].material.color.setHex(0x948160);
@@ -153,16 +157,16 @@ function createTable(l, h ,w) {
 
     // add balls
 
-    let b1 = balls[0];
-	let b2 = balls[1];
-	let b3 = balls[2];
-	let b4 = balls[3];
-	let b5 = balls[4];
-    let b6 = balls[5];
+    let b1 = whiteBalls[0];
+	let b2 = whiteBalls[1];
+	let b3 = whiteBalls[2];
+	let b4 = whiteBalls[3];
+	let b5 = whiteBalls[4];
+    let b6 = whiteBalls[5];
 
     for(let i = 0; i < 6; i++) {
-		balls[i].userData.velocity = new THREE.Vector3(0,0,0);
-		balls[i].userData.orientation = i <= 2 ? -1 : 1;
+		whiteBalls[i].userData.velocity = new THREE.Vector3(0,0,0);
+		whiteBalls[i].userData.orientation = i <= 2 ? -1 : 1;
     }
 
     const ballRadius = w/30;
@@ -198,6 +202,19 @@ function createTable(l, h ,w) {
 	b4.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI);
 
 	b1.position.set(-l/2 + adjustment, ballRadius, 0);
+
+	let N = 14;
+	for(let i = 0; i <= N; i++) {
+		let obj = new THREE.Object3D();
+		let ball = createBall(ballRadius);
+		let randomColour = possibleColours[Math.floor(Math.random() * 6)];
+		ball.material.color.setHex(randomColour);
+		obj.add(ball);
+		let x = (Math.random() * l/3) * 2 - l/3;
+		let z = (Math.random() * w/3) * 2 - w/3;
+		obj.position.set(x , 0, z);
+		scene.add(obj);
+	}
 }
 
 function createScene() {
@@ -329,30 +346,30 @@ function animate() {
     }
 
     for(let i = 0; i < 6; i++) {
-        balls[i].translateX(balls[i].userData.velocity.x * delta);
-        balls[i].translateY(balls[i].userData.velocity.y * delta);
-        balls[i].translateZ(balls[i].userData.velocity.z * delta);
+        whiteBalls[i].translateX(whiteBalls[i].userData.velocity.x * delta);
+        whiteBalls[i].translateY(whiteBalls[i].userData.velocity.y * delta);
+        whiteBalls[i].translateZ(whiteBalls[i].userData.velocity.z * delta);
 
-        if(balls[i].userData.velocity.x < 0) {
-            balls[i].userData.velocity.x += 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
+        if(whiteBalls[i].userData.velocity.x < 0) {
+			whiteBalls[i].userData.velocity.x += 0.01 * whiteBalls[i].userData.velocity.x * whiteBalls[i].userData.velocity.x * delta;
 		} 
 		else {
-            balls[i].userData.velocity.x -= 0.01 * balls[i].userData.velocity.x * balls[i].userData.velocity.x * delta;
+			whiteBalls[i].userData.velocity.x -= 0.01 * whiteBalls[i].userData.velocity.x * whiteBalls[i].userData.velocity.x * delta;
 		}
 		
-        if(balls[i].userData.velocity.z < 0) {
-            balls[i].userData.velocity.z += 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
+        if(whiteBalls[i].userData.velocity.z < 0) {
+			whiteBalls[i].userData.velocity.z += 0.01 * whiteBalls[i].userData.velocity.z * whiteBalls[i].userData.velocity.z * delta;
 		} 
 		else {
-            balls[i].userData.velocity.z -= 0.01 * balls[i].userData.velocity.z * balls[i].userData.velocity.z * delta;
+			whiteBalls[i].userData.velocity.z -= 0.01 * whiteBalls[i].userData.velocity.z * whiteBalls[i].userData.velocity.z * delta;
         }
 
 		// if ball moves too slowly, stop it
-        if(Math.abs(balls[i].userData.velocity.x) < 5) {
-            balls[i].userData.velocity.x = 0;
+        if(Math.abs(whiteBalls[i].userData.velocity.x) < 5) {
+            whiteBalls[i].userData.velocity.x = 0;
         }
-        if(Math.abs(balls[i].userData.velocity.z) < 5) {
-            balls[i].userData.velocity.z = 0;
+        if(Math.abs(whiteBalls[i].userData.velocity.z) < 5) {
+            whiteBalls[i].userData.velocity.z = 0;
         }
     }
 
