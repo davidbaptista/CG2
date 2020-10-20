@@ -167,7 +167,14 @@ function createTable(l, h ,w) {
     for(let i = 0; i < 6; i++) {
 		whiteBalls[i].userData.velocity = new THREE.Vector3(0,0,0);
 		whiteBalls[i].userData.orientation = i <= 2 ? -1 : 1;
-    }
+	}
+	
+	b1.userData.correction = 0;
+	b2.userData.correction = Math.PI / 2;;
+	b3.userData.correction = Math.PI / 2;
+	b4.userData.correction = Math.PI;
+	b5.userData.correction = Math.PI / 2;
+	b6.userData.correction = Math.PI / 2;
 
     const ballRadius = w/30;
 
@@ -185,21 +192,15 @@ function createTable(l, h ,w) {
     scene.add(b5);
 	scene.add(b6);
 	
-
 	b3.position.set(l/4, ballRadius, w/2 - adjustment);
-	b3.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 
 	b2.position.set(-l/4, ballRadius, w/2 - adjustment);
-	b2.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 
 	b5.position.set(l/4, ballRadius, -w/2 + adjustment);
-	b5.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
 
 	b6.position.set(-l/4, ballRadius, -w/2 + adjustment);
-	b6.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
 
 	b4.position.set(l/2 - adjustment, ballRadius, 0);
-	b4.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI);
 
 	b1.position.set(-l/2 + adjustment, ballRadius, 0);
 
@@ -215,7 +216,7 @@ function createTable(l, h ,w) {
 		obj.position.set(x , 0, z);
 		scene.add(obj);
 	}
-}
+}	
 
 function createScene() {
     'use strict';
@@ -346,9 +347,9 @@ function animate() {
     }
 
     for(let i = 0; i < 6; i++) {
-        whiteBalls[i].translateX(whiteBalls[i].userData.velocity.x * delta);
-        whiteBalls[i].translateY(whiteBalls[i].userData.velocity.y * delta);
-        whiteBalls[i].translateZ(whiteBalls[i].userData.velocity.z * delta);
+        whiteBalls[i].position.x += whiteBalls[i].userData.velocity.x * delta;
+        whiteBalls[i].position.y += whiteBalls[i].userData.velocity.y * delta;
+        whiteBalls[i].position.z += whiteBalls[i].userData.velocity.z * delta;
 
         if(whiteBalls[i].userData.velocity.x < 0) {
 			whiteBalls[i].userData.velocity.x += 0.01 * whiteBalls[i].userData.velocity.x * whiteBalls[i].userData.velocity.x * delta;
@@ -376,8 +377,8 @@ function animate() {
     if(shot && selectedStick) {
         shot = 0;
         let angle = selectedStick.userData.rotation
-        selectedBall.userData.velocity.x = 100 * Math.cos(angle);
-        selectedBall.userData.velocity.z = 100 * Math.sin(angle * selectedBall.userData.orientation);
+        selectedBall.userData.velocity.x = 100 * Math.cos(angle + selectedBall.userData.correction);
+        selectedBall.userData.velocity.z = 100 * Math.sin((angle + selectedBall.userData.correction) * selectedBall.userData.orientation);
         console.log(angle);
     }
 
