@@ -22,6 +22,8 @@ let shot = 0;
 
 let possibleColours = ["0xffff00", "0xff00ff", "0x00ffff", "0x0000ff", "0xff0000", "0x00ff00"];
 
+const ballRadius = 4.5;
+
 
 
 function createBox(l, h, w) {
@@ -48,7 +50,7 @@ function createCylinder(l) {
 function createBall(r) {
     'use strict';
 
-    geometry = new THREE.SphereGeometry(r, 32, 32);
+    geometry = new THREE.SphereGeometry(r, 4, 4);
     material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true});
     mesh = new THREE.Mesh(geometry, material);	
     mesh.position.set(0, 0, 0);
@@ -176,8 +178,6 @@ function createTable(l, h ,w) {
 	b5.userData.correction = Math.PI / 2;
 	b6.userData.correction = Math.PI / 2;
 
-    const ballRadius = w/30;
-
     b1.add(createBall(ballRadius));
 	b2.add(createBall(ballRadius));
 	b3.add(createBall(ballRadius));
@@ -231,7 +231,7 @@ function createScene() {
 
 function createCamera() {
     'use strict';
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
     //camera.position.x = 250;
     camera.position.y = 250;
     //camera.position.z = 250;
@@ -330,6 +330,50 @@ function init() {
     window.addEventListener("resize", onResize);
 }
 
+
+function moveBall(ball, delta){
+
+    direction = new THREE.Vector3 (ball.userData.velocity.x * delta, ball.userData.velocity.y * delta, ball.userData.velocity.z * delta);
+
+    ball.position.x += direction.x;
+    ball.position.y += direction.y;
+    ball.position.z += direction.z;
+
+    axis = new THREE.Vector3(0,0,0);
+    ballToGround = new THREE.Vector3(0, -1, 0);
+    angle = direction.length() / ballRadius;
+    axis.crossVectors (direction, ballToGround);
+    axis.normalize();
+    
+    var q1 = new THREE.Quaternion();
+	q1.setFromAxisAngle( axis, angle );
+	ball.quaternion.premultiply( q1 );
+
+
+    if(ball.userData.velocity.x < 0) {
+        ball.userData.velocity.x += 0.01 * ball.userData.velocity.x * ball.userData.velocity.x * delta;
+    } 
+    else {
+        ball.userData.velocity.x -= 0.01 * ball.userData.velocity.x * ball.userData.velocity.x * delta;
+    }
+    
+    if(ball.userData.velocity.z < 0) {
+        ball.userData.velocity.z += 0.01 * ball.userData.velocity.z * ball.userData.velocity.z * delta;
+    } 
+    else {
+        ball.userData.velocity.z -= 0.01 * ball.userData.velocity.z * ball.userData.velocity.z * delta;
+    }
+
+    // if ball moves too slowly, stop it
+    if(Math.abs(ball.userData.velocity.x) < 5) {
+        ball.userData.velocity.x = 0;
+    }
+    if(Math.abs(ball.userData.velocity.z) < 5) {
+        ball.userData.velocity.z = 0;
+    }
+
+}
+
 function animate() {
 	'use strict';
     let rotationSpeed = Math.PI / 6;
@@ -347,39 +391,16 @@ function animate() {
     }
 
     for(let i = 0; i < 6; i++) {
-        whiteBalls[i].position.x += whiteBalls[i].userData.velocity.x * delta;
-        whiteBalls[i].position.y += whiteBalls[i].userData.velocity.y * delta;
-        whiteBalls[i].position.z += whiteBalls[i].userData.velocity.z * delta;
-
-        if(whiteBalls[i].userData.velocity.x < 0) {
-			whiteBalls[i].userData.velocity.x += 0.01 * whiteBalls[i].userData.velocity.x * whiteBalls[i].userData.velocity.x * delta;
-		} 
-		else {
-			whiteBalls[i].userData.velocity.x -= 0.01 * whiteBalls[i].userData.velocity.x * whiteBalls[i].userData.velocity.x * delta;
-		}
-		
-        if(whiteBalls[i].userData.velocity.z < 0) {
-			whiteBalls[i].userData.velocity.z += 0.01 * whiteBalls[i].userData.velocity.z * whiteBalls[i].userData.velocity.z * delta;
-		} 
-		else {
-			whiteBalls[i].userData.velocity.z -= 0.01 * whiteBalls[i].userData.velocity.z * whiteBalls[i].userData.velocity.z * delta;
-        }
-
-		// if ball moves too slowly, stop it
-        if(Math.abs(whiteBalls[i].userData.velocity.x) < 5) {
-            whiteBalls[i].userData.velocity.x = 0;
-        }
-        if(Math.abs(whiteBalls[i].userData.velocity.z) < 5) {
-            whiteBalls[i].userData.velocity.z = 0;
-        }
+        moveBall(whiteBalls[i], delta)
     }
 
     if(shot && selectedStick) {
         shot = 0;
-        let angle = selectedStick.userData.rotation
-        selectedBall.userData.velocity.x = 100 * Math.cos(angle + selectedBall.userData.correction);
-        selectedBall.userData.velocity.z = 100 * Math.sin((angle + selectedBall.userData.correction) * selectedBall.userData.orientation);
-        console.log(angle);
+        let direction = new THREE.Vector3( 0, 1, 0);
+        direction = direction.applyEuler(selectedStick.rotation)
+
+        selectedBall.userData.velocity.x = 20 * direction.x;
+        selectedBall.userData.velocity.z = 20 * direction.z;
     }
 
     render();
