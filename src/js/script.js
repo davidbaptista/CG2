@@ -26,11 +26,19 @@ let shot = 0;
 
 let possibleColours = ["0xffff00", "0xff00ff", "0x00ffff", "0x0000ff", "0xff0000", "0x00ff00"];
 
+let aspectRatio = window.innerHeight/window.innerWidth;
+
+let orthographic = true;
+
+const cameraSize = 256;
+
 const ballRadius = 4.5;
 
 let tableLength = 245;
 let tableHeight = 5;
 let tableWidth = 135;
+
+let followingCamera = false;
 
 
 function createBox(l, h, w) {
@@ -285,20 +293,19 @@ function createScene() {
 
     scene = new THREE.Scene();
 
-
     scene.add(new THREE.AxisHelper(100));
 
     limits = [tableLength/2 - tableHeight, -tableLength/2 + tableHeight, tableWidth/2 - tableHeight, -tableWidth/2 + tableHeight];
-
 
     createTable(tableLength, tableHeight, tableWidth);
 }
 
 function createCamera() {
-    'use strict';
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+	'use strict';
+	
+    camera = new THREE.OrthographicCamera(-cameraSize, cameraSize, cameraSize*aspectRatio, -cameraSize*aspectRatio, 1, 1000);
     camera.position.x = 0;
-    camera.position.y = 250;
+    camera.position.y = 500;
     camera.position.z = 0;
     camera.lookAt(scene.position);
 }
@@ -306,12 +313,20 @@ function createCamera() {
 function onResize() {
     'use strict';
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-    }
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	
+	if(orthographic) {
+		aspectRatio = window.innerHeight / window.innerWidth;
+		camera.top = cameraSize * aspectRatio;
+		camera.bottom = cameraSize * - aspectRatio;
+		camera.updateProjectionMatrix();
+	}
+	else {
+		if (window.innerHeight > 0 && window.innerWidth > 0) {
+			camera.aspect = window.innerHeight/window.innerWidth;
+			camera.updateProjectionMatrix();
+		}
+	}
 }
 
 function onKeyUp(e) {
@@ -343,22 +358,47 @@ function onKeyDown(e) {
 	case 39: 	// ->
 		rotate[1] = 1;
 		break;
-	case 52:	// 1
+	case 49:	// 1
+   		camera = new THREE.OrthographicCamera(-cameraSize, cameraSize, cameraSize*aspectRatio, -cameraSize*aspectRatio, 1, 1000);
+		camera.position.x = 0;
+		camera.position.y = 10;
+		camera.position.z = 0;
+		orthographic = true;
+		followingCamera = false;
+		camera.lookAt(new THREE.Vector3(0,-11.5,0));
+		break;
+	case 50:	// 2
+		camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);		
+		camera.position.x = 200;
+		camera.position.y = 200;
+		camera.position.z = 200;
+		camera.lookAt(scene.position);
+		orthographic = false;
+		followingCamera = false;
+		break;
+	case 51:	// 3
+		if(selectedBall && selectedBall.userData.velocity.length() != 0 ) {
+			camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+			followingCamera = true;
+			orthographic = false;
+		}		
+		break;
+	case 52:	// 4
 		selectStick(0);
 		break;
-	case 53:	// 2
+	case 53:	// 5
 		selectStick(1);
 		break
-	case 54:	// 3
+	case 54:	// 6
 		selectStick(2);
 		break;
-	case 55:	// 4
+	case 55:	// 7
 		selectStick(3);
 		break
-	case 56:	// 5
+	case 56:	// 8
 		selectStick(4);
 		break;
-	case 57:	// 6
+	case 57:	// 9
 		selectStick(5);
 		break
     case 69:  	//E
@@ -388,14 +428,8 @@ function init() {
     createScene();
     createCamera();
 
-    render();
-
-    let v1 = new THREE.Vector3(1,1,1);
-    let v2 = new THREE.Vector3(4,4,4);
-    let v3 = new THREE.Vector3(2,2,2);
-    v2.dot(v3);
-    console.log(v2);
-
+	render();
+	
 	window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
@@ -592,7 +626,16 @@ function animate() {
         selectedBall.userData.shot = true;
         selectedBall.userData.velocity.x = 400 * direction.x;
         selectedBall.userData.velocity.z = 400 * direction.z;
-    }
+	}
+	
+	if(followingCamera && selectedBall && selectedBall.userData.velocity.length() != 0 ) {
+		let v = selectedBall.userData.velocity.clone();
+		v.normalize();
+		camera.position.x = selectedBall.position.x - 30 * v.x;
+		camera.position.y = selectedBall.position.y + 20;
+		camera.position.z = selectedBall.position.z - 30 * v.z;
+		camera.lookAt(selectedBall.position)
+	}
 
     render();
 
