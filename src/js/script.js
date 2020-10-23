@@ -67,7 +67,7 @@ function createHole(l, h ,w){
 function createBall(r) {
     'use strict';
 
-    geometry = new THREE.SphereGeometry(r, 32, 32);
+    geometry = new THREE.SphereGeometry(r, 8, 8);
     material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true});
     mesh = new THREE.Mesh(geometry, material);	
     mesh.position.set(0, 0, 0);
@@ -233,6 +233,8 @@ function createTable(l, h ,w) {
     for(let i = 0; i < 6; i++) {
         whiteBalls[i].userData.velocity = new THREE.Vector3(0,0,0);
         whiteBalls[i].userData.acceleration = 0;
+        whiteBalls[i].userData.shot = false;
+        whiteBalls[i].userData.falling = false;
 	}
 	
 	b1.userData.correction = 0;
@@ -268,9 +270,10 @@ function createTable(l, h ,w) {
 
 	b1.position.set(-l/2 + adjustment, ballRadius + h/2, 0);
 
-	let N = 10;
+	let N = 25;
 	for(let i = 0; i <= N; i++) {
         let ball = createColoredBall(l, w);
+        ball.userData.falling = false;
         coloredBalls.push(ball);
 		scene.add(ball);
 	}
@@ -387,7 +390,11 @@ function init() {
 
     render();
 
-
+    let v1 = new THREE.Vector3(1,1,1);
+    let v2 = new THREE.Vector3(4,4,4);
+    let v3 = new THREE.Vector3(2,2,2);
+    v2.dot(v3);
+    console.log(v2);
 
 	window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKeyDown);
@@ -445,10 +452,11 @@ function detectHole(ball){
     for(let i = 0; i < 6; i++){
         holePosition = new THREE.Vector3(holes[i].position.x, ballRadius + tableHeight/2, holes[i].position.z);
         if(ballPosition.distanceTo(holePosition) < tableWidth/20){
-            ball.userData.acceleration = 9.8;
+            ball.userData.acceleration = 98,25;
             ball.userData.velocity.x = holes[i].position.x - ball.position.x,
             ball.userData.velocity.z = holes[i].position.z - ball.position.z;
             ball.userData.velocity.setLength(7);
+            ball.userData.falling = true;
         }
     }
 }
@@ -459,7 +467,7 @@ function detectBallCollision(ball){
     let ball2 = null;
 
     for (let i=0; i < coloredBalls.length; i++){
-        if(ball == coloredBalls[i]){
+        if(ball == coloredBalls[i] || coloredBalls[i].userData.falling){
             continue;
         }
         
@@ -472,7 +480,7 @@ function detectBallCollision(ball){
     }
 
     for (let i=0; i < whiteBalls.length; i++){
-        if(ball == whiteBalls[i]){
+        if(ball == whiteBalls[i] || !whiteBalls[i].userData.shot || whiteBalls[i].userData.falling){
             continue;
         }
         
@@ -502,18 +510,18 @@ function detectBallCollision(ball){
         ball.position.sub(distance1);
         ball2.position.sub(distance2);
 
+        distance.subVectors(ball.position, ball2.position);
+
         velocityDifference = ball.userData.velocity.clone();
         velocityDifference.sub(ball2.userData.velocity);
 
         let aux = distance.clone();
-        console.log(aux);
         aux.multiplyScalar(distance.dot(velocityDifference)/distance.lengthSq());
         ball.userData.velocity.subVectors(ball.userData.velocity, aux);
         
-        aux.copy(distance);
         distance.negate();
+        aux.copy(distance);
         velocityDifference.negate();
-        console.log(aux);
         aux.multiplyScalar(distance.dot(velocityDifference)/distance.lengthSq());
         ball2.userData.velocity.subVectors(ball2.userData.velocity, aux);
     }
@@ -562,14 +570,18 @@ function animate() {
         detectHole(whiteBalls[i]);
         moveBall(whiteBalls[i], delta);
         detectCollision(whiteBalls[i]);
-        detectBallCollision(whiteBalls[i]);
+        if(whiteBalls[i].userData.shot && !whiteBalls[i].userData.falling){
+            detectBallCollision(whiteBalls[i]);
+        }
     }
 
     for(let i = 0; i < coloredBalls.length; i++) {
         detectHole(coloredBalls[i]);
         moveBall(coloredBalls[i], delta);
         detectCollision(coloredBalls[i]);
-        detectBallCollision(coloredBalls[i]);
+        if(!coloredBalls[i].userData.falling){
+            detectBallCollision(coloredBalls[i]);
+        }
     }
 
     if(shot && selectedStick) {
@@ -577,8 +589,9 @@ function animate() {
         let direction = new THREE.Vector3( 0, 1, 0);
         direction = direction.applyEuler(selectedStick.rotation)
 
-        selectedBall.userData.velocity.x = 200 * direction.x;
-        selectedBall.userData.velocity.z = 200 * direction.z;
+        selectedBall.userData.shot = true;
+        selectedBall.userData.velocity.x = 400 * direction.x;
+        selectedBall.userData.velocity.z = 400 * direction.z;
     }
 
     render();
