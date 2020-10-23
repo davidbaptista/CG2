@@ -268,7 +268,7 @@ function createTable(l, h ,w) {
 
 	b1.position.set(-l/2 + adjustment, ballRadius + h/2, 0);
 
-	let N = 25;
+	let N = 10;
 	for(let i = 0; i <= N; i++) {
         let ball = createColoredBall(l, w);
         coloredBalls.push(ball);
@@ -387,6 +387,8 @@ function init() {
 
     render();
 
+
+
 	window.addEventListener("keyup", onKeyUp);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
@@ -444,9 +446,76 @@ function detectHole(ball){
         holePosition = new THREE.Vector3(holes[i].position.x, ballRadius + tableHeight/2, holes[i].position.z);
         if(ballPosition.distanceTo(holePosition) < tableWidth/20){
             ball.userData.acceleration = 9.8;
+            ball.userData.velocity.x = holes[i].position.x - ball.position.x,
+            ball.userData.velocity.z = holes[i].position.z - ball.position.z;
             ball.userData.velocity.setLength(7);
         }
-        //console.log(ballPosition.distanceTo(holePosition))
+    }
+}
+
+
+function detectBallCollision(ball){
+
+    let ball2 = null;
+
+    for (let i=0; i < coloredBalls.length; i++){
+        if(ball == coloredBalls[i]){
+            continue;
+        }
+        
+        let distance = ball.position.clone();
+        distance.sub(coloredBalls[i].position);
+
+        if(ballRadius*2 > distance.length()){
+            ball2 = coloredBalls[i];
+        }
+    }
+
+    for (let i=0; i < whiteBalls.length; i++){
+        if(ball == whiteBalls[i]){
+            continue;
+        }
+        
+        let distance = ball.position.clone();
+        distance.sub(whiteBalls[i].position);
+
+        if(ballRadius*2 > distance.length()){
+            ball2 = whiteBalls[i];
+        }
+    }
+
+    if(ball2){
+        let distance = ball.position.clone();
+        let velocity1 = ball.userData.velocity.length();
+        let velocity2 = ball2.userData.velocity.length();
+        let sum = velocity1 + velocity2;
+        distance.sub(ball2.position);
+        let distance2 = distance.clone();
+        let distance1 = distance.clone();
+
+        distance1.setLength(ballRadius*2 - distance.length());
+        distance2.setLength(ballRadius*2 - distance.length());
+
+        distance1.multiplyScalar(-(velocity1/sum));
+        distance2.multiplyScalar((velocity2/sum));
+
+        ball.position.sub(distance1);
+        ball2.position.sub(distance2);
+
+        velocityDifference = ball.userData.velocity.clone();
+        velocityDifference.sub(ball2.userData.velocity);
+
+        let aux = distance.clone();
+        console.log(aux);
+        aux.multiplyScalar(distance.dot(velocityDifference)/distance.lengthSq());
+        ball.userData.velocity.subVectors(ball.userData.velocity, aux);
+        
+        aux.copy(distance);
+        distance.negate();
+        velocityDifference.negate();
+        console.log(aux);
+        aux.multiplyScalar(distance.dot(velocityDifference)/distance.lengthSq());
+        ball2.userData.velocity.subVectors(ball2.userData.velocity, aux);
     }
 }
 
@@ -492,13 +561,15 @@ function animate() {
     for(let i = 0; i < 6; i++) {
         detectHole(whiteBalls[i]);
         moveBall(whiteBalls[i], delta);
-        detectCollision(whiteBalls[i])
+        detectCollision(whiteBalls[i]);
+        detectBallCollision(whiteBalls[i]);
     }
 
     for(let i = 0; i < coloredBalls.length; i++) {
         detectHole(coloredBalls[i]);
         moveBall(coloredBalls[i], delta);
-        detectCollision(coloredBalls[i])
+        detectCollision(coloredBalls[i]);
+        detectBallCollision(coloredBalls[i]);
     }
 
     if(shot && selectedStick) {
