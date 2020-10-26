@@ -293,8 +293,6 @@ function createScene() {
 
     scene = new THREE.Scene();
 
-    scene.add(new THREE.AxisHelper(100));
-
     limits = [tableLength/2 - tableHeight, -tableLength/2 + tableHeight, tableWidth/2 - tableHeight, -tableWidth/2 + tableHeight];
 
     createTable(tableLength, tableHeight, tableWidth);
@@ -401,14 +399,6 @@ function onKeyDown(e) {
 	case 57:	// 9
 		selectStick(5);
 		break
-    case 69:  	//E
-    case 101: 	//e
-        scene.traverse(function (node) {
-            if (node instanceof THREE.AxisHelper) {
-                node.visible = !node.visible;
-            }
-        });
-        break;
     }
 }
 
