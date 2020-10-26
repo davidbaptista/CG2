@@ -359,7 +359,7 @@ function onKeyDown(e) {
 	case 49:	// 1
    		camera = new THREE.OrthographicCamera(-cameraSize, cameraSize, cameraSize*aspectRatio, -cameraSize*aspectRatio, 1, 1000);
 		camera.position.x = 0;
-		camera.position.y = 10;
+		camera.position.y = 500;
 		camera.position.z = 0;
 		orthographic = true;
 		followingCamera = false;
