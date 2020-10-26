@@ -633,7 +633,7 @@ function animate() {
 		camera.position.x = selectedBall.position.x - 30 * v.x;
 		camera.position.y = selectedBall.position.y + 20;
 		camera.position.z = selectedBall.position.z - 30 * v.z;
-		camera.lookAt(selectedBall.position)
+		camera.lookAt(selectedBall.position);
 	}
 
     render();
